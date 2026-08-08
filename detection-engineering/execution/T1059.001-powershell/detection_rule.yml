@@ -1,0 +1,43 @@
+title: Suspicious PowerShell Execution from Unsanctioned Parent Process
+id: 5f2b8d91-4a3c-4b3f-8a12-9876543210fe
+status: experimental
+description: Detects execution of PowerShell with hidden/bypass switches spawned by high-risk parent processes.
+references:
+    - https://attack.mitre.org/techniques/T1059/001/
+    - https://redcanary.com/threat-detection-report/
+author: Your Name
+date: 2026/08/07
+tags:
+    - attack.execution
+    - attack.t1059.001
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_target:
+        Image|endswith: '\powershell.exe'
+        CommandLine|contains:
+            - ' -nop'
+            - ' -noprofile'
+            - ' -w hidden'
+            - ' -windowstyle hidden'
+            - ' -ep bypass'
+            - ' -executionpolicy bypass'
+    selection_parent:
+        ParentImage|endswith:
+            - '\winword.exe'
+            - '\excel.exe'
+            - '\outlook.exe'
+            - '\w3wp.exe'
+            - '\sqlservr.exe'
+            - '\chrome.exe'
+            - '\msedge.exe'
+            - '\wscript.exe'
+            - '\cscript.exe'
+            - '\mshta.exe'
+            - '\cmd.exe'
+    condition: selection_target and selection_parent
+falsepositives:
+    - Administrative maintenance scripts launched via scheduled tasks or cmd.exe
+    - Web applications configured to invoke PowerShell scripts natively
+level: high
